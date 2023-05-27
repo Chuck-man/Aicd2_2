@@ -11,6 +11,20 @@ struct stats {
         std::cout << "\nNumber of copies: " << copy_count
             << "\nNumber of comparisons: " << comparison_count << std::endl;
     }
+
+    stats operator+=(const stats& right) {
+        comparison_count += right.comparison_count;
+        copy_count += right.copy_count;
+
+        return *this;
+    }
+
+    stats operator/(int val) {
+        comparison_count /= val;
+        copy_count /= val;
+
+        return *this;
+    }
 };
 
 stats insert_sort(vector<int>& obj) {
@@ -29,54 +43,35 @@ stats insert_sort(vector<int>& obj) {
     return values;
 }
 
-/*stats qsortRecursive(vector<int>& obj, int size) {
-    //Указатели в начало и в конец массива
+void quick_sort(vector<int>& arr, size_t left, size_t right) {
+    int i = left, j = right;
     stats values{ 0,0 };
-    size = obj.size();
-    int i = 0;
-    int j = size - 1;
+    int pivot = arr[(left + right) / 2];
 
-    //Центральный элемент массива
-    int mid = obj[size / 2];
-
-    //Делим массив
+    /* partition */
     do {
-        //Пробегаем элементы, ищем те, которые нужно перекинуть в другую часть
-        //В левой части массива пропускаем(оставляем на месте) элементы, которые меньше центрального
-        while (obj[i] < mid) {
+        while (arr[i] < pivot)
             i++;
-        }
-        //В правой части пропускаем элементы, которые больше центрального
-        while (obj[j] > mid) {
+        while (arr[j] > pivot)
             j--;
-        }
-
-        //Меняем элементы местами
         if (i <= j) {
-            int tmp = obj[i];
-            obj[i] = obj[j];
-            obj[j] = tmp;
+            int tmp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = tmp;
             values.copy_count += 3;
-
             i++;
             j--;
         }
         ++values.comparison_count;
-
     } while (i <= j);
 
+    /* recursion */
+    if (left < j)
+        quick_sort(arr, left, j);
+    if (i < right)
+        quick_sort(arr, i, right);
 
-    //Рекурсивные вызовы, если осталось, что сортировать
-    if (j > 0) {
-        //"Левый кусок"
-        qsortRecursive(obj, j + 1);
-    }
-    if (i < size) {
-        //"Правый кусок"
-        qsortRecursive((vector<int>&)obj[i], obj.size() - i);
-    }
-    return values;
-}*/
+}
 
 void back_sorting(std::vector<int>& obj) {
     for (int i = 1; i < obj.size(); ++i) {
@@ -103,31 +98,50 @@ void completion(std::vector<int>& obj, int count) {
     }
 }
 
-typedef stats(*func)(std::vector<int>& a);
-
-stats avg_stats(int count, func f) {
+stats avg_stats_insert(int count) {
     stats result;
     for (int i = 0; i < 100; ++i) {
         std::vector<int> tmp;
         completion(tmp, count);
-        //result += f(tmp) / 100;
+        result += insert_sort(tmp) / 100;
+    }
+
+    return result;
+}
+
+stats avg_stats_quick(int count) {
+    stats result;
+    for (int i = 0; i < 100; ++i) {
+        std::vector<int> tmp;
+        completion(tmp, count);
+        int quantity = count - 1;
+        //result += quick_sort(tmp, 0, static_cast<size_t>(count) - 1) / 100;
     }
 
     return result;
 }
 
 int main() {
-
-    std::cout << "bubble sorting:\n";
-    std::cout << "average values for 100 rundom arrays: ";
+    std::vector<int> temp;
+    completion(temp, 10);
+    for (int i = 0; i < temp.size(); ++i) {
+        cout << temp[i] << " ";
+    }
+    cout << "\n";
+    quick_sort(temp, 0, 9);
+    for (int i = 0; i < temp.size(); ++i) {
+        cout << temp[i] << " ";
+    }
+    /*std::cout << "Sorting by inserts:\n";
+    std::cout << "Average values for 100 random arrays: ";
 
     for (int i = 25; i <= 100; i *= 2) {
-        stats avg_val = avg_stats(i * 1000, &insert_sort);
+        stats avg_values = avg_stats_insert(i * 1000);
         std::cout << "\n" << i << "000 values: ";
-        avg_val.print();
+        avg_values.print();
     }
 
-    std::cout << "\nvalues for sorted arrays: ";
+    std::cout << "\nValues for sorted arrays: ";
 
     for (int i = 25; i <= 100; i *= 2) {
         std::vector<int> v;
@@ -138,7 +152,7 @@ int main() {
         result.print();
     }
 
-    std::cout << "\nvalues for back sorted arrays: ";
+    std::cout << "\nValues for back sorted arrays: ";
 
     for (int i = 25; i <= 100; i *= 2) {
         std::vector<int> v;
@@ -148,6 +162,37 @@ int main() {
         std::cout << "\n" << i << "000 values: ";
         result.print();
     }
+
+    std::cout << "Quick sort:\n";
+    std::cout << "Average values for 100 random arrays: ";
+
+    for (int i = 25; i <= 100; i *= 2) {
+        //stats avg_values = avg_stats(i * 1000);
+        std::cout << "\n" << i << "000 values: ";
+        avg_values.print();
+    }
+
+    std::cout << "\nValues for sorted arrays: ";
+
+    for (int i = 25; i <= 100; i *= 2) {
+        std::vector<int> v;
+        completion(v, i * 1000);
+        quick_sort(v);
+        //stats result = quick_sort(v, 0, static_cast<size_t>(i) * 1000 - 1);
+        std::cout << "\n" << i << "000 values: ";
+        result.print();
+    }
+
+    std::cout << "\nValues for back sorted arrays: ";
+
+    for (int i = 25; i <= 100; i *= 2) {
+        std::vector<int> v;
+        completion(v, i * 1000);
+        back_sorting(v);
+        //stats result = quick_sort(0, static_cast<size_t>(i) * 1000 - 1);
+        std::cout << "\n" << i << "000 values: ";
+        result.print();
+    }*/
 
     return 0;
 }
